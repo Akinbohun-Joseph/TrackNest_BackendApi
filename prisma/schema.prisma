@@ -1,0 +1,74 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String             @id @default(uuid())
+  email             String             @unique
+  phone             String             @unique
+  password          String
+  fullName          String
+  dateOfBirth       DateTime?
+  gender            Gender?
+  isActive          Boolean            @default(true)
+  isVerified        Boolean            @default(false)
+  lastLogin         DateTime?
+  lastLocationId    String?
+  lastLocation      Location?          @relation(fields: [lastLocationId], references: [id])
+  emergencyContact EmergencyContact[]
+  medicalInfo       Json?
+  alerts            Alert[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+}
+
+model Location {
+  id        String   @id @default(uuid())
+  latitude  Float
+  longitude Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relation back to User
+  usersWithThisLocation User[]
+}
+
+model EmergencyContact {
+  id           String  @id @default(uuid())
+  name         String
+  phone        String
+  email        String?
+  relationship String
+  priority     Int     @default(1)
+  isActive     Boolean @default(true)
+
+  // Foreign key to User
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model Alert {
+  id        String   @id @default(uuid())
+  type      String // e.g., "panic", "medical", "location"
+  message   String?
+  status    String   @default("pending") // e.g., pending, sent, resolved
+  createdAt DateTime @default(now())
+  isActive  Boolean
+
+  // Foreign key to User
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+enum Gender {
+  male
+  female
+  other
+}
